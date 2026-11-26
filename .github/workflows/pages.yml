@@ -29,6 +29,8 @@ jobs:
           cp index.html app.js pwa.js styles.css sw.js manifest.webmanifest dist/
           cp -R icons dist/icons
       - uses: actions/configure-pages@v5
+        with:
+          enablement: true
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
