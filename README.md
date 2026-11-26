@@ -21,12 +21,13 @@ Al pasar de la versión abierta como archivo a la versión publicada, descarga u
 - Registra gastos e ingresos, además de pagos a tarjetas, pagos a entidades y transferencias entre cuentas.
 - Los pagos a tarjetas y a entidades cuentan como gastos necesarios de la categoría “Obligaciones o deudas”. Las transferencias propias quedan registradas, pero no se suman como ingreso ni gasto.
 - Una transferencia propia asociada a Nu se clasifica automáticamente como “Ahorro” y aparece en su categoría y subtotal. No se suma al gasto total, pero sí se descuenta del saldo neto del flujo de caja. Las transferencias a otras cuentas siguen siendo movimientos neutros.
-- En el flujo de caja, las compras pagadas con Nu o Bogotá no se descuentan en el mes de compra; el desembolso se refleja cuando se registra el pago a la tarjeta. Los demás gastos pagados directamente y los ahorros en Nu se descuentan en su mes.
+- Puedes escoger Nu, Bogotá, Bancolombia, Nequi, Caja Social y otros bancos comunes, o agregar el nombre de cualquier otro banco o tarjeta. Los bancos y tarjetas se tratan como crédito; “No aplica” es un pago directo.
+- En el flujo de caja, las compras hechas con un banco o tarjeta no se descuentan en el mes de compra; el desembolso se refleja cuando registras el pago de esa tarjeta. Los gastos con “No aplica” y los ahorros en Nu se descuentan en su mes.
 - El gráfico “Movimiento total del dinero” muestra todas las entradas y salidas brutas, sin aplicar esas reglas. Puede contar dos salidas si registras tanto una compra con tarjeta como su pago posterior.
 - Consulta por separado los pagos a tarjetas y entidades dentro del resumen mensual.
-- El desglose “Gastos con tarjeta” muestra solo compras con Nu y Bogotá; excluye pagos directos y abonos a tarjetas.
+- El desglose por banco o tarjeta se genera con los medios que tuvieron compras a crédito en el mes; excluye pagos directos y abonos a tarjetas.
 - Clasifica las devoluciones como entradas de dinero y consulta el saldo neto del flujo (ingresos menos salidas pagadas y ahorros en Nu).
-- Los gastos incluyen nombre, fecha, categoría, tipo, tarjeta usada (Nu, Bogotá o No aplica) y valor.
+- Los gastos incluyen nombre, fecha, categoría, tipo, banco o medio de pago y valor.
 - Maneja COP y USD. Para cada movimiento en USD, ingresa la tasa USD → COP que quieres usar; esa tasa queda asociada al movimiento.
 - Consulta totales mensuales, gastos necesarios y hormiga, distribución por categoría (incluido el ahorro), tipo y tarjeta.
 - Filtra la lista por mes, movimiento, categoría, tipo y tarjeta; puedes cambiar el medio de pago de uno o varios movimientos, o eliminarlos.

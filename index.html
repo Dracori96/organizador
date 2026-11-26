@@ -94,7 +94,7 @@
 
         <section class="panel cashflow-panel" aria-label="Comparación de ingresos, gastos y ahorros">
           <div class="panel-heading">
-            <div><h2>Entradas y salidas de dinero</h2><p>Salidas efectivas del mes · compras Nu y Bogotá se descuentan al pagar la tarjeta · valores en COP</p></div>
+            <div><h2>Entradas y salidas de dinero</h2><p>Salidas efectivas del mes · compras con bancos o tarjetas se descuentan al registrar su pago · valores en COP</p></div>
             <span class="panel-icon" aria-hidden="true">↔</span>
           </div>
           <div class="cashflow-layout">
@@ -113,9 +113,9 @@
           </div>
         </section>
 
-        <section class="panel payment-summary" aria-label="Gastos con tarjeta">
+        <section class="panel payment-summary" aria-label="Gastos a crédito por banco o tarjeta">
           <div class="panel-heading">
-            <div><h2>¿Cuánto gastaste con cada tarjeta?</h2><p>Compras con Nu y Bogotá · no incluye pagos de deuda ni gastos directos · valores en COP</p></div>
+            <div><h2>¿Cuánto gastaste con cada banco o tarjeta?</h2><p>Compras registradas a crédito · se muestran los medios usados este mes · valores en COP</p></div>
             <span class="panel-icon" aria-hidden="true">▰</span>
           </div>
           <div id="payment-totals" class="payment-totals"></div>
@@ -177,7 +177,7 @@
         </section>
         <section class="panel cashflow-panel total-movement-panel" aria-label="Totales brutos de ingresos y salidas">
           <div class="panel-heading">
-            <div><h2>Movimiento total del dinero</h2><p>Vista bruta del mes · incluye todos los ingresos y salidas, también compras con Nu y Bogotá</p></div>
+            <div><h2>Movimiento total del dinero</h2><p>Vista bruta del mes · incluye todos los ingresos y salidas, también compras a crédito y pagos posteriores</p></div>
             <span class="panel-icon" aria-hidden="true">⇄</span>
           </div>
           <div class="cashflow-layout">
@@ -247,6 +247,12 @@
               <option value="Nu">Nu</option>
               <option value="Bogotá">Bogotá</option>
             </select>
+            <div id="expense-custom-payment-field" class="custom-payment-field" hidden>
+              <label class="field-label" for="custom-payment-name">Nombre del banco o tarjeta</label>
+              <input id="custom-payment-name" class="text-input" type="text" maxlength="60" autocomplete="organization" />
+              <small>Este medio se registrará como crédito y aparecerá en tus gráficos.</small>
+            </div>
+            <small class="payment-method-hint">Los bancos y tarjetas se consideran crédito; “No aplica” representa un pago directo.</small>
           </div>
           <div class="form-field">
             <label class="field-label" for="expense-date">Fecha</label>

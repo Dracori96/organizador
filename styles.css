@@ -105,8 +105,10 @@ h1 { margin-bottom: 5px; font: 800 clamp(21px, 2.4vw, 29px) Manrope, sans-serif;
 .payment-card-count { color: #999ba1; font-size: 9px; }
 .payment-nu { background: #f8f6ff; }.payment-nu .payment-dot { background: #7965d7; }
 .payment-bogota { background: #fffaf3; }.payment-bogota .payment-dot { background: #dc9651; }
+.payment-bank, .payment-custom { background: #f4f8fa; }.payment-bank .payment-dot, .payment-custom .payment-dot { background: #5487a2; }
 .payment-none { background: #f7faf8; }.payment-none .payment-dot { background: #5da78c; }
 .payment-unknown { background: #f7f7f7; }.payment-unknown .payment-dot { background: #9a9da4; }
+.payment-card-top span:last-child { overflow-wrap: anywhere; }
 
 .charts-grid { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(300px, .9fr); gap: 15px; margin-top: 17px; }
 .panel { padding: 20px 21px; }
@@ -158,7 +160,10 @@ td:first-child { color: #343740; font-weight: 600; }
 .movement-badge { display: inline-flex; padding: 5px 8px; border-radius: 20px; font-size: 9px; font-weight: 600; }
 .movement-expense { color: #6654c7; background: #f1effb; }.movement-income, .movement-refund { color: #25866b; background: #eaf7f1; }.movement-card-payment, .movement-entity-payment, .movement-transfer { color: #5d77b1; background: #edf2fb; }
 .payment-badge { display: inline-flex; padding: 5px 8px; border-radius: 20px; font-size: 9px; font-weight: 600; }
-.payment-badge-nu { color: #6654c7; background: #f1effb; }.payment-badge-bogota { color: #a56d31; background: #fff3e3; }.payment-badge-none { color: #47866f; background: #edf7f2; }.payment-badge-unknown { color: #70747d; background: #f0f1f2; }
+.payment-badge-nu { color: #6654c7; background: #f1effb; }.payment-badge-bogota { color: #a56d31; background: #fff3e3; }.payment-badge-bank, .payment-badge-custom { color: #426d83; background: #edf5f8; }.payment-badge-none { color: #47866f; background: #edf7f2; }.payment-badge-unknown { color: #70747d; background: #f0f1f2; }
+.custom-payment-field:not([hidden]) { display: grid; gap: 6px; margin-top: 10px; }
+.custom-payment-field small { color: #858991; font-size: 10px; line-height: 1.4; }
+.payment-method-hint { display: block; margin-top: 7px; color: #858991; font-size: 9px; line-height: 1.4; }
 .payment-cell { display: flex; align-items: center; gap: 5px; }
 .payment-edit-button { width: 23px; height: 23px; padding: 0; border: 0; border-radius: 6px; color: #8d879f; background: transparent; font-size: 13px; }
 .payment-edit-button:hover, .payment-edit-button:focus-visible { color: #6654c7; background: #f1effb; }

@@ -32,10 +32,23 @@ const SAVINGS_CATEGORY = "Ahorro";
 const PAYMENT_METHODS = [
   { name: "Nu", tone: "nu" },
   { name: "Bogotá", tone: "bogota" },
+  { name: "Bancolombia", tone: "bank" },
+  { name: "Nequi", tone: "bank" },
+  { name: "Caja Social", tone: "bank" },
+  { name: "Davivienda", tone: "bank" },
+  { name: "BBVA", tone: "bank" },
+  { name: "Scotiabank Colpatria", tone: "bank" },
+  { name: "Banco Popular", tone: "bank" },
+  { name: "Banco Agrario", tone: "bank" },
+  { name: "AV Villas", tone: "bank" },
+  { name: "Banco Falabella", tone: "bank" },
+  { name: "DaviPlata", tone: "bank" },
+  { name: "Lulo Bank", tone: "bank" },
+  { name: "Ualá", tone: "bank" },
   { name: "No aplica", tone: "none" },
 ];
-const CARD_PAYMENT_METHODS = PAYMENT_METHODS.filter((method) => method.name !== "No aplica");
 const UNCLASSIFIED_PAYMENT_METHOD = { name: "Sin clasificar", tone: "unknown" };
+const CUSTOM_PAYMENT_METHOD_VALUE = "__custom_payment_method__";
 const STORAGE_KEY = "misgastos-expenses-v1";
 const BACKUP_FORMAT = "misgastos-backup";
 const BACKUP_VERSION = 1;
@@ -206,8 +219,31 @@ function isSavingsTransfer(transaction) {
   return getMovementType(transaction) === "Transferencia propia" && transaction.paymentMethod === "Nu";
 }
 
+function getPaymentMethods() {
+  const methods = PAYMENT_METHODS.filter((method) => method.name !== "No aplica");
+  const knownNames = new Set(PAYMENT_METHODS.map((method) => method.name));
+  const customNames = new Set();
+  transactions.forEach((transaction) => {
+    const name = typeof transaction.paymentMethod === "string" ? transaction.paymentMethod.trim() : "";
+    if (name && !knownNames.has(name) && name !== UNCLASSIFIED_PAYMENT_METHOD.name) customNames.add(name);
+  });
+  customNames.forEach((name) => methods.push({ name, tone: "custom" }));
+  return [PAYMENT_METHODS.find((method) => method.name === "No aplica"), ...methods];
+}
+
+function getCardPaymentMethods() {
+  return getPaymentMethods().filter((method) => method.name !== "No aplica");
+}
+
+function isCreditPaymentMethod(paymentMethod) {
+  return Boolean(paymentMethod) &&
+    paymentMethod !== "No aplica" &&
+    paymentMethod !== UNCLASSIFIED_PAYMENT_METHOD.name &&
+    paymentMethod !== CUSTOM_PAYMENT_METHOD_VALUE;
+}
+
 function isDeferredCardPurchase(transaction) {
-  return getMovementType(transaction) === "Gasto" && ["Nu", "Bogotá"].includes(transaction.paymentMethod);
+  return getMovementType(transaction) === "Gasto" && isCreditPaymentMethod(transaction.paymentMethod);
 }
 
 function getMovementCategory(transaction) {
@@ -249,6 +285,68 @@ function fillSelect(select, options, firstLabel) {
   options.forEach((option) => select.add(new Option(option, option)));
 }
 
+function fillPaymentSelect(select, { firstLabel, includeNoApply = true, includeCustom = false, includeUnclassified = false } = {}) {
+  select.replaceChildren();
+  if (firstLabel) select.add(new Option(firstLabel, ""));
+  getPaymentMethods()
+    .filter((method) => includeNoApply || method.name !== "No aplica")
+    .forEach((method) => select.add(new Option(method.name, method.name)));
+  if (includeUnclassified) select.add(new Option(UNCLASSIFIED_PAYMENT_METHOD.name, UNCLASSIFIED_PAYMENT_METHOD.name));
+  if (includeCustom) select.add(new Option("Otro banco o tarjeta…", CUSTOM_PAYMENT_METHOD_VALUE));
+}
+
+function normalizePaymentMethod(name) {
+  const cleanedName = name.trim().replace(/\s+/g, " ");
+  const existingMethod = getPaymentMethods().find(
+    (method) => method.name.toLocaleLowerCase("es") === cleanedName.toLocaleLowerCase("es")
+  );
+  return existingMethod ? existingMethod.name : cleanedName;
+}
+
+function selectedPaymentMethod(select, customNameInput) {
+  return select.value === CUSTOM_PAYMENT_METHOD_VALUE
+    ? normalizePaymentMethod(customNameInput.value)
+    : select.value;
+}
+
+function updateCustomPaymentField(select, field, input) {
+  const isCustomMethod = select.value === CUSTOM_PAYMENT_METHOD_VALUE;
+  field.hidden = !isCustomMethod;
+  input.required = isCustomMethod;
+  if (!isCustomMethod) input.value = "";
+}
+
+function refreshPaymentSelectors() {
+  const paymentFilter = $("#payment-filter");
+  const previousFilter = paymentFilter.value;
+  fillSelect(
+    paymentFilter,
+    [...getPaymentMethods().map((method) => method.name), UNCLASSIFIED_PAYMENT_METHOD.name],
+    "Todos los medios"
+  );
+  if ([...getPaymentMethods().map((method) => method.name), UNCLASSIFIED_PAYMENT_METHOD.name].includes(previousFilter)) {
+    paymentFilter.value = previousFilter;
+  }
+
+  const editPayment = $("#edit-payment-method");
+  const previousEditMethod = editPayment.value;
+  fillPaymentSelect(editPayment, { firstLabel: "Selecciona un medio de pago", includeUnclassified: true });
+  const unclassifiedOption = Array.from(editPayment.options).find(
+    (option) => option.value === UNCLASSIFIED_PAYMENT_METHOD.name
+  );
+  if (unclassifiedOption) unclassifiedOption.disabled = true;
+  if (Array.from(editPayment.options).some((option) => option.value === previousEditMethod)) {
+    editPayment.value = previousEditMethod;
+  }
+
+  const bulkPayment = $("#bulk-payment-method");
+  const previousBulkMethod = bulkPayment.value;
+  fillPaymentSelect(bulkPayment, { firstLabel: "Selecciona un medio de pago" });
+  if (Array.from(bulkPayment.options).some((option) => option.value === previousBulkMethod)) {
+    bulkPayment.value = previousBulkMethod;
+  }
+}
+
 function fillMovementSelect(select, firstLabel) {
   select.replaceChildren(new Option(firstLabel, ""));
   MOVEMENT_TYPES.forEach((movementType) => select.add(new Option(movementLabel(movementType), movementType)));
@@ -259,18 +357,7 @@ function initializeFormOptions() {
   fillMovementSelect($("#movement-filter"), "Todos los movimientos");
   fillSelect($("#type-filter"), TYPES.map((type) => type.name), "Todos los tipos");
   fillSelect($("#category-filter"), ALL_CATEGORIES, "Todas las categorías");
-  fillSelect(
-    $("#payment-filter"),
-    [...PAYMENT_METHODS.map((method) => method.name), UNCLASSIFIED_PAYMENT_METHOD.name],
-    "Todos los medios"
-  );
-  fillSelect(
-    $("#edit-payment-method"),
-    [...PAYMENT_METHODS.map((method) => method.name), UNCLASSIFIED_PAYMENT_METHOD.name],
-    "Selecciona un medio de pago"
-  );
-  $("#edit-payment-method option:last-child").disabled = true;
-  fillSelect($("#bulk-payment-method"), PAYMENT_METHODS.map((method) => method.name), "Selecciona un medio de pago");
+  refreshPaymentSelectors();
 }
 
 function updateMovementFields() {
@@ -311,17 +398,15 @@ function updateMovementFields() {
   if (!isExpenseMovement) expenseTypeSelect.value = "";
 
   const paymentSelect = $("#expense-payment");
-  paymentSelect.replaceChildren();
   if (movementType === "Pago a tarjeta") {
-    paymentSelect.add(new Option("Selecciona tarjeta", ""));
-    ["Nu", "Bogotá"].forEach((method) => paymentSelect.add(new Option(method, method)));
-    paymentSelect.value = ["Nu", "Bogotá"].includes(previousPayment) ? previousPayment : "";
+    fillPaymentSelect(paymentSelect, { firstLabel: "Selecciona tarjeta", includeNoApply: false, includeCustom: true });
+    paymentSelect.value = isCreditPaymentMethod(previousPayment) ? previousPayment : "";
     $("#expense-payment-label").textContent = "Tarjeta a la que abonaste";
   } else {
-    PAYMENT_METHODS.forEach((method) => paymentSelect.add(new Option(method.name, method.name)));
+    fillPaymentSelect(paymentSelect, { includeCustom: true });
     paymentSelect.value = movementType === "Pago a entidad"
       ? "No aplica"
-      : PAYMENT_METHODS.some((method) => method.name === previousPayment)
+      : getPaymentMethods().some((method) => method.name === previousPayment) || previousPayment === CUSTOM_PAYMENT_METHOD_VALUE
         ? previousPayment
         : "No aplica";
     const paymentLabel = {
@@ -332,6 +417,11 @@ function updateMovementFields() {
     $("#expense-payment-label").textContent = paymentLabel[movementType] || "Cuenta o tarjeta donde entró";
   }
   paymentSelect.required = movementType === "Pago a tarjeta";
+  updateCustomPaymentField(
+    paymentSelect,
+    $("#expense-custom-payment-field"),
+    $("#custom-payment-name")
+  );
 }
 
 function renderSummary(monthTransactions) {
@@ -411,21 +501,28 @@ function renderTotalMovement(monthTransactions) {
 }
 
 function getPaymentMethod(expense) {
-  return PAYMENT_METHODS.some((method) => method.name === expense.paymentMethod)
-    ? expense.paymentMethod
+  return typeof expense.paymentMethod === "string" && expense.paymentMethod.trim()
+    ? expense.paymentMethod.trim()
     : UNCLASSIFIED_PAYMENT_METHOD.name;
 }
 
 function renderPaymentSummary(monthTransactions) {
   const cardExpenses = monthTransactions.filter((transaction) =>
     getMovementType(transaction) === "Gasto" &&
-    CARD_PAYMENT_METHODS.some((method) => method.name === transaction.paymentMethod)
+    isCreditPaymentMethod(transaction.paymentMethod)
   );
-  $("#payment-totals").innerHTML = CARD_PAYMENT_METHODS.map((method) => {
+  const methodsUsed = getCardPaymentMethods().filter((method) =>
+    cardExpenses.some((expense) => expense.paymentMethod === method.name)
+  );
+  if (!methodsUsed.length) {
+    $("#payment-totals").innerHTML = '<div class="chart-empty">Cuando registres compras a crédito, aquí verás el total por banco o tarjeta.</div>';
+    return;
+  }
+  $("#payment-totals").innerHTML = methodsUsed.map((method) => {
     const methodExpenses = cardExpenses.filter((expense) => expense.paymentMethod === method.name);
     const total = methodExpenses.reduce((sum, expense) => sum + toCOP(expense), 0);
     return `<article class="payment-total-card payment-${method.tone}">
-      <div class="payment-card-top"><span class="payment-dot"></span><span>${method.name}</span></div>
+      <div class="payment-card-top"><span class="payment-dot"></span><span>${escapeHTML(method.name)}</span></div>
       <strong>${formatCOP(total)}</strong>
       <span class="payment-card-count">${methodExpenses.length} ${methodExpenses.length === 1 ? "gasto" : "gastos"}</span>
     </article>`;
@@ -526,7 +623,7 @@ function renderTransactions(monthTransactions) {
       "Transferencia propia": "transfer",
       "Devolución / reembolso": "refund",
     }[movementType];
-    const methodInfo = PAYMENT_METHODS.find((item) => item.name === getPaymentMethod(expense)) || UNCLASSIFIED_PAYMENT_METHOD;
+    const methodInfo = getPaymentMethods().find((item) => item.name === getPaymentMethod(expense)) || UNCLASSIFIED_PAYMENT_METHOD;
     const amount = expense.currency === "USD"
       ? `${formatUSD(expense.amount)} <small>(${formatCOP(toCOP(expense))})</small>`
       : formatCOP(expense.amount);
@@ -537,7 +634,7 @@ function renderTransactions(monthTransactions) {
       <td>${isExpense(expense) ? `<span class="type-badge type-${getExpenseType(expense).toLowerCase()}">${escapeHTML(getExpenseType(expense))}</span>` : "—"}</td>
       <td>
         <div class="payment-cell">
-          <span class="payment-badge payment-badge-${methodInfo.tone}">${methodInfo.name}</span>
+          <span class="payment-badge payment-badge-${methodInfo.tone}">${escapeHTML(methodInfo.name)}</span>
           <button class="payment-edit-button" type="button" data-edit-payment="${escapeHTML(expense.id)}" aria-label="Cambiar tarjeta o cuenta de ${escapeHTML(expense.name)}" title="Cambiar tarjeta o cuenta">✎</button>
         </div>
       </td>
@@ -550,6 +647,7 @@ function renderTransactions(monthTransactions) {
 
 function render() {
   const monthTransactions = selectedMonthTransactions();
+  refreshPaymentSelectors();
   renderSummary(monthTransactions);
   renderCashflow(monthTransactions);
   renderTotalMovement(monthTransactions);
@@ -566,8 +664,9 @@ function openDialog() {
   }
   form.reset();
   const paymentSelect = $("#expense-payment");
-  paymentSelect.replaceChildren(...PAYMENT_METHODS.map((method) => new Option(method.name, method.name)));
+  fillPaymentSelect(paymentSelect, { includeCustom: true });
   paymentSelect.value = "No aplica";
+  updateCustomPaymentField(paymentSelect, $("#expense-custom-payment-field"), $("#custom-payment-name"));
   updateMovementFields();
   $("#expense-date").value = localDateString();
   $("#exchange-rate").value = "4000";
@@ -592,7 +691,10 @@ backupFileInput.addEventListener("change", async () => {
 });
 $("#movement-type").addEventListener("change", updateMovementFields);
 $("#expense-payment").addEventListener("change", () => {
-  if ($("#movement-type").value === "Transferencia propia") updateMovementFields();
+  updateCustomPaymentField($("#expense-payment"), $("#expense-custom-payment-field"), $("#custom-payment-name"));
+  if ($("#movement-type").value === "Transferencia propia") {
+    $("#expense-category").value = $("#expense-payment").value === "Nu" ? SAVINGS_CATEGORY : "Transferencia entre cuentas";
+  }
 });
 $("#close-dialog").addEventListener("click", () => dialog.close());
 $("#cancel-dialog").addEventListener("click", () => dialog.close());
@@ -621,6 +723,7 @@ form.addEventListener("submit", (event) => {
     return;
   }
   const movementType = String(formData.get("movementType"));
+  const paymentMethod = selectedPaymentMethod($("#expense-payment"), $("#custom-payment-name"));
   const transaction = {
     id: crypto.randomUUID(),
     name: String(formData.get("name")).trim(),
@@ -629,7 +732,7 @@ form.addEventListener("submit", (event) => {
     exchangeRate,
     category: String(formData.get("category")),
     movementType,
-    paymentMethod: String(formData.get("paymentMethod")),
+    paymentMethod,
     date: String(formData.get("date")),
     createdAt: new Date().toISOString(),
   };
@@ -640,10 +743,13 @@ form.addEventListener("submit", (event) => {
     !MOVEMENT_TYPES.includes(movementType) ||
     (movementType === "Gasto" && !transaction.type) ||
     !transaction.paymentMethod ||
+    transaction.paymentMethod === CUSTOM_PAYMENT_METHOD_VALUE ||
     !transaction.date ||
-    (movementType === "Pago a tarjeta" && !["Nu", "Bogotá"].includes(transaction.paymentMethod))
+    (movementType === "Pago a tarjeta" && !isCreditPaymentMethod(transaction.paymentMethod))
   ) {
-    error.textContent = "Completa los campos requeridos para guardar el movimiento.";
+    error.textContent = $("#expense-payment").value === CUSTOM_PAYMENT_METHOD_VALUE && !transaction.paymentMethod
+      ? "Escribe el nombre del banco o la tarjeta."
+      : "Completa los campos requeridos para guardar el movimiento.";
     error.hidden = false;
     return;
   }
@@ -669,8 +775,8 @@ $("#expense-list").addEventListener("click", (event) => {
     const isCardPayment = movementType === "Pago a tarjeta";
     const isEntityPayment = movementType === "Pago a entidad";
     const editMethods = isCardPayment
-      ? ["Nu", "Bogotá"]
-      : [...PAYMENT_METHODS.map((method) => method.name), UNCLASSIFIED_PAYMENT_METHOD.name];
+      ? getCardPaymentMethods().map((method) => method.name)
+      : [...getPaymentMethods().map((method) => method.name), UNCLASSIFIED_PAYMENT_METHOD.name];
     fillSelect($("#edit-payment-method"), editMethods, isCardPayment ? "Selecciona tarjeta" : "Selecciona un medio");
     if (!isCardPayment) $("#edit-payment-method option:last-child").disabled = true;
     $("#edit-payment-label").textContent = isCardPayment
@@ -723,7 +829,7 @@ function openBulkPaymentDialog() {
   $("#bulk-payment-method").value = "";
   $("#bulk-payment-error").hidden = true;
   $("#bulk-expense-list").innerHTML = visibleExpenses.map((expense) => {
-    const methodInfo = PAYMENT_METHODS.find((method) => method.name === getPaymentMethod(expense)) || UNCLASSIFIED_PAYMENT_METHOD;
+    const methodInfo = getPaymentMethods().find((method) => method.name === getPaymentMethod(expense)) || UNCLASSIFIED_PAYMENT_METHOD;
     const amount = expense.currency === "USD"
       ? `${formatUSD(expense.amount)} (${formatCOP(toCOP(expense))})`
       : formatCOP(expense.amount);
@@ -734,7 +840,7 @@ function openBulkPaymentDialog() {
         <small>${dateLabel(expense.date)} · ${escapeHTML(getMovementCategory(expense))} · ${escapeHTML(movementLabel(getMovementType(expense)))}</small>
       </span>
       <span class="bulk-expense-amount">${amount}</span>
-      <span class="payment-badge payment-badge-${methodInfo.tone}">${methodInfo.name}</span>
+      <span class="payment-badge payment-badge-${methodInfo.tone}">${escapeHTML(methodInfo.name)}</span>
     </label>`;
   }).join("");
   updateBulkSelectionCount();
@@ -772,7 +878,7 @@ bulkPaymentForm.addEventListener("submit", (event) => {
     error.hidden = false;
     return;
   }
-  if (!PAYMENT_METHODS.some((method) => method.name === paymentMethod)) {
+  if (!getPaymentMethods().some((method) => method.name === paymentMethod)) {
     error.textContent = "Selecciona el medio de pago que quieres asignar.";
     error.hidden = false;
     return;
@@ -782,7 +888,7 @@ bulkPaymentForm.addEventListener("submit", (event) => {
     paymentMethod === "No aplica" &&
     selectedExpenses.some((transaction) => getMovementType(transaction) === "Pago a tarjeta")
   ) {
-    error.textContent = "Los pagos a tarjeta deben asociarse con Nu o Bogotá.";
+    error.textContent = "Los pagos a tarjeta deben asociarse con un banco o tarjeta de crédito.";
     error.hidden = false;
     return;
   }
@@ -829,8 +935,8 @@ paymentForm.addEventListener("submit", (event) => {
     return;
   }
   const validMethods = transaction && getMovementType(transaction) === "Pago a tarjeta"
-    ? ["Nu", "Bogotá"]
-    : PAYMENT_METHODS.map((method) => method.name);
+    ? getCardPaymentMethods().map((method) => method.name)
+    : getPaymentMethods().map((method) => method.name);
   if (!transaction || !validMethods.includes(paymentMethod)) {
     $("#payment-form-error").textContent = "Selecciona un medio de pago válido.";
     $("#payment-form-error").hidden = false;
