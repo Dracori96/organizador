@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f5f6f2" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <title>Mis gastos | Finanzas personales</title>
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="./icons/icon-192.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <a class="brand" href="#" aria-label="Mis gastos, inicio">
+          <span class="brand-mark" aria-hidden="true">$</span>
+          <span>mis<span class="brand-light">gastos</span></span>
+        </a>
+        <div class="sidebar-label">TU ESPACIO</div>
+        <nav class="navigation" aria-label="Navegación principal">
+          <a class="nav-link active" href="#resumen"><span class="nav-icon" aria-hidden="true">▦</span> Resumen</a>
+          <a class="nav-link" href="#movimientos"><span class="nav-icon" aria-hidden="true">↕</span> Movimientos</a>
+          <a class="nav-link" href="#analisis"><span class="nav-icon" aria-hidden="true">◔</span> Análisis</a>
+        </nav>
+        <div class="sidebar-note">
+          <span class="note-icon" aria-hidden="true">✦</span>
+          <p>Pequeños pasos, grandes cambios.</p>
+          <span>Entender tus gastos es el primer paso para tomar el control.</span>
+        </div>
+        <div class="sidebar-footer"><span class="privacy-dot"></span> Tus datos se guardan en este dispositivo</div>
+      </aside>
+
+      <main class="main-content">
+        <header class="topbar">
+          <div class="mobile-brand"><span class="brand-mark" aria-hidden="true">$</span> mis<span class="brand-light">gastos</span></div>
+          <div class="topbar-spacer"></div>
+          <label class="month-picker" for="month-filter">
+            <span aria-hidden="true">▦</span>
+            <input id="month-filter" type="month" aria-label="Filtrar por mes" />
+          </label>
+          <button class="primary-button top-add" type="button" id="open-expense">
+            <span aria-hidden="true">＋</span> Agregar movimiento
+          </button>
+        </header>
+
+        <section id="resumen" class="page-heading">
+          <div>
+            <p class="eyebrow">TU PANORAMA FINANCIERO</p>
+            <h1>Hola, <span class="heading-accent">¿cómo van tus gastos?</span></h1>
+            <p class="subtitle">Un vistazo claro a dónde va tu dinero.</p>
+          </div>
+          <div class="heading-date" id="heading-month"></div>
+        </section>
+
+        <section class="backup-panel" aria-label="Copia de seguridad">
+          <div class="backup-message">
+            <strong>Tus movimientos se guardan automáticamente en este navegador.</strong>
+            <span>Descarga una copia por seguridad. Restaurarla añade movimientos nuevos sin borrar los actuales; guarda el archivo en un lugar privado.</span>
+          </div>
+          <div class="backup-actions">
+            <button class="secondary-button" type="button" id="export-backup">Descargar copia</button>
+            <button class="secondary-button" type="button" id="import-backup">Restaurar copia</button>
+            <input id="backup-file" type="file" accept=".json,application/json" hidden />
+          </div>
+        </section>
+
+        <section class="summary-grid" aria-label="Resumen del periodo">
+          <article class="summary-card total-card">
+            <div class="card-topline"><span class="card-label">Gasto total del mes</span><span class="metric-icon purple" aria-hidden="true">↗</span></div>
+            <div class="metric-value" id="total-spent">$0</div>
+            <div class="metric-footnote">En pesos colombianos <span id="usd-total"></span></div>
+          </article>
+          <article class="summary-card">
+            <div class="card-topline"><span class="card-label">Gastos registrados</span><span class="metric-icon blue" aria-hidden="true">↕</span></div>
+            <div class="metric-value" id="expense-count">0</div>
+            <div class="metric-footnote">gastos este mes</div>
+          </article>
+          <article class="summary-card">
+            <div class="card-topline"><span class="card-label">Gastos necesarios</span><span class="metric-icon green" aria-hidden="true">✓</span></div>
+            <div class="metric-value" id="necessary-total">$0</div>
+            <div class="metric-footnote"><span id="necessary-share">0%</span> del total del mes</div>
+          </article>
+          <article class="summary-card">
+            <div class="card-topline"><span class="card-label">Gastos hormiga</span><span class="metric-icon orange" aria-hidden="true">⌁</span></div>
+            <div class="metric-value" id="ant-total">$0</div>
+            <div class="metric-footnote"><span id="ant-count">0</span> movimientos pequeños que suman</div>
+          </article>
+        </section>
+
+        <section class="panel cashflow-panel" aria-label="Comparación de ingresos, gastos y ahorros">
+          <div class="panel-heading">
+            <div><h2>Entradas y salidas de dinero</h2><p>Salidas efectivas del mes · compras Nu y Bogotá se descuentan al pagar la tarjeta · valores en COP</p></div>
+            <span class="panel-icon" aria-hidden="true">↔</span>
+          </div>
+          <div class="cashflow-layout">
+            <div id="cashflow-chart" class="cashflow-chart"></div>
+            <article class="net-balance-card">
+              <span>Saldo neto</span>
+              <strong id="net-balance">$0</strong>
+              <small>Ingresos menos salidas pagadas y ahorros</small>
+            </article>
+          </div>
+          <div class="movement-subtotals">
+            <div><span>Pagos a tarjetas <small>(incluidos en gastos · categoría deudas)</small></span><strong id="card-payments-total">$0</strong></div>
+            <div><span>Pagos a entidades <small>(incluidos en gastos · categoría deudas)</small></span><strong id="entity-payments-total">$0</strong></div>
+            <div><span>Ahorros en Nu <small>(categoría ahorro · no son gastos)</small></span><strong id="savings-total">$0</strong></div>
+            <div><span>Otras transferencias propias <small>(no se suman como ingreso ni gasto)</small></span><strong id="own-transfers-total">$0</strong></div>
+          </div>
+        </section>
+
+        <section class="panel payment-summary" aria-label="Gastos con tarjeta">
+          <div class="panel-heading">
+            <div><h2>¿Cuánto gastaste con cada tarjeta?</h2><p>Compras con Nu y Bogotá · no incluye pagos de deuda ni gastos directos · valores en COP</p></div>
+            <span class="panel-icon" aria-hidden="true">▰</span>
+          </div>
+          <div id="payment-totals" class="payment-totals"></div>
+        </section>
+
+        <section id="analisis" class="charts-grid">
+          <article class="panel category-panel">
+            <div class="panel-heading">
+              <div><h2>¿A dónde se va tu dinero?</h2><p>Gastos y ahorros por categoría · valores en COP</p></div>
+              <span class="panel-icon" aria-hidden="true">▥</span>
+            </div>
+            <div id="category-chart" class="category-chart"></div>
+          </article>
+          <article class="panel type-panel">
+            <div class="panel-heading">
+              <div><h2>Tipos de gasto</h2><p>Lo que más pesa en tu mes</p></div>
+              <span class="panel-icon" aria-hidden="true">◉</span>
+            </div>
+            <div class="type-chart-wrap">
+              <div id="type-donut" class="donut-chart"><div class="donut-hole"><strong id="type-count">0</strong><span>gastos</span></div></div>
+              <div id="type-legend" class="type-legend"></div>
+            </div>
+          </article>
+        </section>
+
+        <section id="movimientos" class="panel transactions-panel">
+          <div class="transactions-heading">
+            <div><h2>Tus movimientos</h2><p>Todos tus gastos y movimientos, en un solo lugar.</p></div>
+            <div class="transactions-tools">
+              <button class="secondary-button bulk-edit-trigger" type="button" id="open-bulk-payment">Cambiar medio en varios</button>
+              <div class="filter-group">
+                <label class="select-wrap"><span class="sr-only">Filtrar por movimiento</span>
+                  <select id="movement-filter"><option value="">Todos los movimientos</option></select>
+                </label>
+                <label class="select-wrap"><span class="sr-only">Filtrar por tipo de gasto</span>
+                  <select id="type-filter"><option value="">Todos los tipos</option></select>
+                </label>
+                <label class="select-wrap"><span class="sr-only">Filtrar por categoría</span>
+                  <select id="category-filter"><option value="">Todas las categorías</option></select>
+                </label>
+                <label class="select-wrap"><span class="sr-only">Filtrar por medio de pago</span>
+                  <select id="payment-filter"><option value="">Todos los medios</option></select>
+                </label>
+              </div>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+                <thead><tr><th>DESCRIPCIÓN</th><th>CATEGORÍA</th><th>MOVIMIENTO</th><th>TIPO DE GASTO</th><th>TARJETA / CUENTA</th><th>FECHA</th><th class="amount-heading">VALOR</th><th><span class="sr-only">Acciones</span></th></tr></thead>
+              <tbody id="expense-list"></tbody>
+            </table>
+          </div>
+          <div id="empty-state" class="empty-state" hidden>
+            <span class="empty-icon" aria-hidden="true">✦</span>
+            <strong>Aún no hay movimientos por aquí</strong>
+            <span>Agrega tu primer ingreso o gasto y empieza a ver tus finanzas con claridad.</span>
+            <button type="button" class="text-button" id="empty-add">＋ Registrar mi primer movimiento</button>
+          </div>
+        </section>
+        <section class="panel cashflow-panel total-movement-panel" aria-label="Totales brutos de ingresos y salidas">
+          <div class="panel-heading">
+            <div><h2>Movimiento total del dinero</h2><p>Vista bruta del mes · incluye todos los ingresos y salidas, también compras con Nu y Bogotá</p></div>
+            <span class="panel-icon" aria-hidden="true">⇄</span>
+          </div>
+          <div class="cashflow-layout">
+            <div id="total-movement-chart" class="cashflow-chart"></div>
+            <article class="net-balance-card">
+              <span>Balance bruto</span>
+              <strong id="total-movement-balance">$0</strong>
+              <small>Ingresos totales menos salidas totales</small>
+            </article>
+          </div>
+          <p class="movement-chart-note">Incluye consumos con tarjeta, pagos posteriores de tarjeta y deudas, transferencias y ahorros. Si registras una compra con tarjeta y su pago posterior, ambos cuentan como salidas.</p>
+        </section>
+        <footer class="page-footer">Hecho para ayudarte a tener una relación más tranquila con tu dinero <span aria-hidden="true">✦</span></footer>
+      </main>
+    </div>
+
+    <dialog id="expense-dialog" class="expense-dialog" aria-labelledby="dialog-title">
+      <form id="expense-form">
+        <div class="dialog-heading">
+          <div><p class="eyebrow">NUEVO MOVIMIENTO</p><h2 id="dialog-title">Registra un movimiento</h2></div>
+          <button type="button" class="close-button" id="close-dialog" aria-label="Cerrar">×</button>
+        </div>
+        <label class="field-label" for="movement-type">Tipo de movimiento</label>
+        <select id="movement-type" name="movementType" class="text-input">
+          <option value="Gasto">Gasto</option>
+          <option value="Ingreso">Ingreso</option>
+          <option value="Pago a tarjeta">Pago a tarjeta</option>
+          <option value="Pago a entidad">Pago a entidad</option>
+          <option value="Transferencia propia">Transferencia entre cuentas</option>
+          <option value="Devolución / reembolso">Devolución / reembolso</option>
+        </select>
+        <label class="field-label" for="expense-name">Descripción</label>
+        <input id="expense-name" name="name" class="text-input" type="text" maxlength="70" placeholder="Ej. Mercado, salario o cuota de vivienda" required />
+        <div class="form-row">
+          <div class="form-field">
+            <label class="field-label" for="expense-amount">Valor</label>
+            <input id="expense-amount" name="amount" class="text-input" type="number" min="0.01" step="0.01" placeholder="0" required />
+          </div>
+          <div class="form-field currency-field">
+            <label class="field-label" for="expense-currency">Moneda</label>
+            <select id="expense-currency" name="currency" class="text-input">
+              <option value="COP">COP · Peso colombiano</option>
+              <option value="USD">USD · Dólar estadounidense</option>
+            </select>
+          </div>
+        </div>
+        <div id="exchange-rate-field" class="form-field exchange-field" hidden>
+          <label class="field-label" for="exchange-rate">Tasa de cambio (1 USD = cuántos COP)</label>
+          <div class="rate-input-wrap"><span>$</span><input id="exchange-rate" name="exchangeRate" type="number" min="1" step="0.01" value="4000" /></div>
+          <span class="field-hint">La tasa queda guardada con este movimiento para que tus reportes sean comparables.</span>
+        </div>
+        <div class="form-row">
+          <div class="form-field">
+            <label id="expense-category-label" class="field-label" for="expense-category">Categoría</label>
+            <select id="expense-category" name="category" class="text-input"></select>
+          </div>
+          <div id="expense-type-field" class="form-field">
+            <label class="field-label" for="expense-type">Tipo de gasto</label>
+            <select id="expense-type" name="type" class="text-input"></select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-field">
+            <label id="expense-payment-label" class="field-label" for="expense-payment">Tarjeta / medio de pago</label>
+            <select id="expense-payment" name="paymentMethod" class="text-input">
+              <option value="No aplica">No aplica</option>
+              <option value="Nu">Nu</option>
+              <option value="Bogotá">Bogotá</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label class="field-label" for="expense-date">Fecha</label>
+            <input id="expense-date" name="date" class="text-input" type="date" required />
+          </div>
+        </div>
+        <p id="form-error" class="form-error" role="alert" hidden></p>
+        <div class="dialog-actions">
+          <button type="button" class="secondary-button" id="cancel-dialog">Cancelar</button>
+          <button type="submit" class="primary-button">Guardar movimiento <span aria-hidden="true">→</span></button>
+        </div>
+      </form>
+    </dialog>
+    <dialog id="payment-dialog" class="expense-dialog" aria-labelledby="payment-dialog-title">
+      <form id="payment-form">
+        <div class="dialog-heading">
+          <div><p class="eyebrow">EDITAR MOVIMIENTO</p><h2 id="payment-dialog-title">Cambiar tarjeta o cuenta asociada</h2></div>
+          <button type="button" class="close-button" id="close-payment-dialog" aria-label="Cerrar">×</button>
+        </div>
+        <p id="payment-expense-name" class="payment-expense-name"></p>
+        <label id="edit-payment-label" class="field-label" for="edit-payment-method">Tarjeta / cuenta asociada</label>
+        <select id="edit-payment-method" class="text-input" required></select>
+        <p id="payment-form-error" class="form-error" role="alert" hidden></p>
+        <div class="dialog-actions">
+          <button type="button" class="secondary-button" id="cancel-payment-dialog">Cancelar</button>
+          <button type="submit" class="primary-button">Guardar cambio <span aria-hidden="true">→</span></button>
+        </div>
+      </form>
+    </dialog>
+    <dialog id="bulk-payment-dialog" class="expense-dialog bulk-payment-dialog" aria-labelledby="bulk-payment-title">
+      <form id="bulk-payment-form">
+        <div class="dialog-heading">
+          <div><p class="eyebrow">EDICIÓN EN GRUPO</p><h2 id="bulk-payment-title">Cambiar tarjeta o cuenta</h2></div>
+          <button type="button" class="close-button" id="close-bulk-payment" aria-label="Cerrar">×</button>
+        </div>
+        <p id="bulk-payment-period" class="bulk-payment-period"></p>
+        <label class="bulk-select-all" for="bulk-select-all">
+          <input id="bulk-select-all" type="checkbox" />
+          <span>Seleccionar todos los movimientos listados</span>
+        </label>
+        <div id="bulk-expense-list" class="bulk-expense-list" aria-label="Selecciona los movimientos que quieres actualizar"></div>
+        <p id="bulk-selection-count" class="bulk-selection-count" aria-live="polite"></p>
+        <label class="field-label" for="bulk-payment-method">Asignar tarjeta o cuenta</label>
+        <select id="bulk-payment-method" class="text-input" required></select>
+        <p id="bulk-payment-error" class="form-error" role="alert" hidden></p>
+        <div class="dialog-actions">
+          <button type="button" class="secondary-button" id="cancel-bulk-payment">Cancelar</button>
+          <button type="submit" class="primary-button">Guardar en seleccionados <span aria-hidden="true">→</span></button>
+        </div>
+      </form>
+    </dialog>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <script src="app.js"></script>
+    <script src="pwa.js"></script>
+  </body>
+</html>
